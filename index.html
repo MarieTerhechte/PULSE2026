@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PULSE | Berichtszusammenfassungen</title>
-  <!-- Tailwind CSS Framework -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PDF.js für die Textextraktion aus PDFs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     tailwind.config = {
@@ -14,7 +12,7 @@
         extend: {
           colors: {
             brand: {
-              DEFAULT: '#2e7d32', // PULSE Grün
+              DEFAULT: '#2e7d32',
               light: '#81c784',
               soft: '#e8f5e9',
               dark: '#1b5e20',
@@ -30,7 +28,7 @@
 
   <div class="max-w-6xl mx-auto px-4 py-6">
 
-    <!-- UPLOAD-FORMULAR (STARTSEITE) -->
+    <!-- UPLOAD-FORMULAR -->
     <main id="uploadView" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 md:p-12 space-y-8">
       <header class="border-b-2 border-brand pb-4 flex justify-between items-center">
         <div>
@@ -46,15 +44,21 @@
             Bericht in Sekunden zum Onepager
           </h2>
           <p class="text-slate-600 text-base leading-relaxed">
-            Laden Sie einen Bericht als PDF-Datei hoch. Die Anwendung analysiert das Dokument automatisch mit Google Gemini KI, zieht die wichtigsten Aussagen heraus und gestaltet daraus eine kompakte Seite im PULSE-Design.
+            Laden Sie einen Bericht als PDF-Datei hoch. Die Anwendung analysiert das Dokument automatisch mit KI, zieht die wichtigsten Aussagen heraus und gestaltet daraus eine kompakte Seite im PULSE-Design.
           </p>
         </div>
 
         <div class="space-y-4">
-          <div id="dropZone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer flex flex-col items-center justify-center min-h-[200px]">
-            <svg class="w-10 h-10 text-brand mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-            <p id="fileNameDisplay" class="font-bold text-slate-800">PDF-Datei hierher ziehen oder klicken</p>
-            <p class="text-slate-400 text-xs mt-1">PDF-Dokumente bis 15 MB</p>
+          <!-- DROP ZONE / UPLOAD FELDER -->
+          <div id="dropZone" 
+               onclick="document.getElementById('fileInput').click()" 
+               ondragover="handleDragOver(event)" 
+               ondragleave="handleDragLeave(event)" 
+               ondrop="handleDrop(event)"
+               class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer flex flex-col items-center justify-center min-h-[200px]">
+            <svg class="w-10 h-10 text-brand mb-2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+            <p id="fileNameDisplay" class="font-bold text-slate-800 pointer-events-none">PDF-Datei hierher ziehen oder klicken</p>
+            <p class="text-slate-400 text-xs mt-1 pointer-events-none">PDF-Dokumente bis 15 MB</p>
             <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileSelect(event)">
           </div>
 
@@ -65,25 +69,21 @@
       </div>
     </main>
 
-    <!-- LADE-ANZEIGE WÄHREND DER KI-ANALYSE -->
+    <!-- LOADING STATE -->
     <div id="loadingView" class="hidden bg-white rounded-xl border border-slate-200 p-12 text-center space-y-4 my-8 shadow-sm">
       <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-brand border-t-transparent"></div>
       <h3 class="text-xl font-bold text-slate-800">Google Gemini KI analysiert den Bericht...</h3>
-      <p class="text-sm text-slate-500">Kernaussagen, Executive Summary und Kennzahlen werden extrahiert.</p>
+      <p class="text-sm text-slate-500">Kernaussagen und Kennzahlen werden extrahiert.</p>
     </div>
 
-    <!-- ERGEBNIS: PULSE ONEPAGER DESIGN -->
+    <!-- ONEPAGER ERGEBNIS -->
     <div id="onepagerView" class="hidden space-y-4">
-      
       <div class="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm print:hidden">
         <button onclick="resetApp()" class="text-xs font-bold text-slate-500 hover:text-slate-800">← Neuer Bericht</button>
         <button onclick="window.print()" class="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded hover:bg-slate-800">Als PDF drucken / speichern</button>
       </div>
 
-      <!-- DAS ONEPAGER-LAYOUT -->
       <div id="printArea" class="bg-white border border-slate-200 p-8 md:p-12 rounded-xl shadow-lg space-y-8 text-slate-800">
-        
-        <!-- KOPFZEILE -->
         <div class="border-b-2 border-brand pb-3 flex justify-between items-end">
           <div>
             <p id="opMeta" class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">BERICHT | VERTRAULICH</p>
@@ -92,22 +92,18 @@
           <span class="bg-brand text-white font-bold text-[10px] px-3 py-1 rounded tracking-widest uppercase">PULSE</span>
         </div>
 
-        <!-- TITEL & HIGHLIGHT-BOX -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           <div class="md:col-span-2 space-y-2">
             <h1 id="opTitle" class="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">Berichtstitel</h1>
             <p id="opSubtitle" class="text-sm text-slate-500">Untertitel</p>
           </div>
           <div class="border-l-4 border-brand pl-4 py-1 bg-slate-50 rounded-r">
-            <p id="opHighlight" class="text-xs font-bold text-slate-800 leading-snug">
-              Kern-Highlight des Berichts
-            </p>
+            <p id="opHighlight" class="text-xs font-bold text-slate-800 leading-snug">Highlight-Satz</p>
           </div>
         </div>
 
         <hr class="border-slate-200">
 
-        <!-- EXECUTIVE SUMMARY -->
         <div class="space-y-2">
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Executive Summary</h2>
           <p id="opSummary" class="text-xs leading-relaxed text-slate-700"></p>
@@ -115,7 +111,6 @@
 
         <hr class="border-slate-200">
 
-        <!-- WICHTIGSTE KENNZAHLEN (KPIS) -->
         <div class="space-y-3">
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Wichtigste Kennzahlen</h2>
           <div id="opKPIs" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
@@ -123,19 +118,16 @@
 
         <hr class="border-slate-200">
 
-        <!-- ZENTRALE ERKENNTNISSE & TRENDS -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
           <div class="space-y-2">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Zentrale Erkenntnisse</h2>
             <ul id="opFindings" class="text-xs space-y-2 text-slate-700 list-disc pl-4"></ul>
           </div>
-
           <div class="space-y-2">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Entwicklungen und Trends</h2>
             <ul id="opTrends" class="text-xs space-y-2 text-slate-700 list-disc pl-4"></ul>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -145,28 +137,52 @@
     if (window.pdfjsLib) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     }
+    
     let selectedFile = null;
 
+    // FEINTEILIGES DATEI-HANDLING (KLICK + DRAG & DROP)
     function handleFileSelect(e) {
       if (e.target.files && e.target.files[0]) {
         selectedFile = e.target.files[0];
-        document.getElementById('fileNameDisplay').innerText = selectedFile.name;
+        document.getElementById('fileNameDisplay').innerText = "Ausgewählt: " + selectedFile.name;
       }
     }
 
-    async function analyzeReport() {
-      // Frägt nach dem Key oder lädt ihn aus dem Browser-Speicher
-      async function analyzeReport() {
-  // Fest hinterlegter Key – keine Abfrage mehr für Nutzer!
-  const apiKey = "DEIN_GEMINI_API_KEY_HIER_EINFÜGEN";
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('dropZone').classList.add('bg-slate-200');
+    }
 
-  if (!selectedFile) {
-    alert("Bitte wähle zuerst eine PDF-Datei aus.");
-    return;
-  }
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('dropZone').classList.remove('bg-slate-200');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('dropZone').classList.remove('bg-slate-200');
+      
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        selectedFile = e.dataTransfer.files[0];
+        document.getElementById('fileNameDisplay').innerText = "Ausgewählt: " + selectedFile.name;
+      }
+    }
+
+    // HAUPTFUNKTION FÜR KI-ANALYSE
+    async function analyzeReport() {
+      // FEST HINTERLEGTER KEY: Trage hier deinen Key in die Anführungszeichen ein!
+      const apiKey = "DEIN_GEMINI_API_KEY_HIER_EINFÜGEN";
 
       if (!selectedFile) {
         alert("Bitte wähle zuerst eine PDF-Datei aus.");
+        return;
+      }
+
+      if (apiKey === "DEIN_GEMINI_API_KEY_HIER_EINFÜGEN" || !apiKey) {
+        alert("Bitte trage zuerst deinen echten Google Gemini API-Key in den Code ein!");
         return;
       }
 
@@ -174,7 +190,6 @@
       document.getElementById('loadingView').classList.remove('hidden');
 
       try {
-        // 1. Text aus der hochgeladenen PDF extrahieren
         const arrayBuffer = await selectedFile.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let pdfText = '';
@@ -184,7 +199,6 @@
           pdfText += text.items.map(item => item.str).join(' ') + '\n';
         }
 
-        // 2. Anforderung/Prompt für Google Gemini KI definieren
         const promptText = `Du bist ein hochspezialisierter Business-Analyst. Analysiere den folgenden Berichtstext und erstelle eine strukturierte Zusammenfassung auf Deutsch als REINES JSON-Objekt.
 Gib KEINEN Fliesstext, KEINE Einleitung und KEINE Markdown-Codeblöcke (\`\`\`json) zurück!
 
@@ -209,7 +223,6 @@ Verwende exakt folgendes JSON-Schema:
 Hier ist der Berichtstext:
 ${pdfText.slice(0, 12000)}`;
 
-        // 3. API-Anfrage an Google Gemini senden
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -221,22 +234,20 @@ ${pdfText.slice(0, 12000)}`;
         const data = await response.json();
 
         if (data.error) {
-          throw new Error(data.error.message || "Fehler beim API-Aufruf");
+          throw new Error(data.error.message || "API-Fehler");
         }
 
         let rawContent = data.candidates[0].content.parts[0].text;
         rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
         const result = JSON.parse(rawContent);
 
-        // 4. Das Ergebnis in das PULSE-Design einsetzen
         renderOnepager(result);
 
         document.getElementById('loadingView').classList.add('hidden');
         document.getElementById('onepagerView').classList.remove('hidden');
 
       } catch (err) {
-        alert("Fehler bei der KI-Analyse: " + err.message + "\n\nDer API-Key wird zurückgesetzt. Bitte versuche es erneut.");
-        localStorage.removeItem('gemini_api_key');
+        alert("Fehler bei der KI-Analyse: " + err.message);
         document.getElementById('loadingView').classList.add('hidden');
         document.getElementById('uploadView').classList.remove('hidden');
       }
@@ -272,6 +283,8 @@ ${pdfText.slice(0, 12000)}`;
     }
 
     function resetApp() {
+      selectedFile = null;
+      document.getElementById('fileNameDisplay').innerText = "PDF-Datei hierher ziehen oder klicken";
       document.getElementById('onepagerView').classList.add('hidden');
       document.getElementById('uploadView').classList.remove('hidden');
     }
