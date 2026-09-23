@@ -156,19 +156,14 @@
 
     async function analyzeReport() {
       // Frägt nach dem Key oder lädt ihn aus dem Browser-Speicher
-      let apiKey = localStorage.getItem('gemini_api_key');
-      if (!apiKey) {
-        apiKey = prompt("Bitte gib deinen Google Gemini API-Key ein:");
-        if (apiKey) {
-          apiKey = apiKey.trim();
-          localStorage.setItem('gemini_api_key', apiKey);
-        }
-      }
+      async function analyzeReport() {
+  // Fest hinterlegter Key – keine Abfrage mehr für Nutzer!
+  const apiKey = "DEIN_GEMINI_API_KEY_HIER_EINFÜGEN";
 
-      if (!apiKey) {
-        alert("Ohne API-Key kann die KI den Bericht nicht analysieren.");
-        return;
-      }
+  if (!selectedFile) {
+    alert("Bitte wähle zuerst eine PDF-Datei aus.");
+    return;
+  }
 
       if (!selectedFile) {
         alert("Bitte wähle zuerst eine PDF-Datei aus.");
