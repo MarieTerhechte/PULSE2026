@@ -49,7 +49,7 @@
         </div>
 
         <div class="space-y-4">
-          <!-- DROP ZONE / UPLOAD FELDER -->
+          <!-- DROP ZONE -->
           <div id="dropZone" 
                onclick="document.getElementById('fileInput').click()" 
                ondragover="handleDragOver(event)" 
@@ -140,7 +140,6 @@
     
     let selectedFile = null;
 
-    // FEINTEILIGES DATEI-HANDLING (KLICK + DRAG & DROP)
     function handleFileSelect(e) {
       if (e.target.files && e.target.files[0]) {
         selectedFile = e.target.files[0];
@@ -171,18 +170,9 @@
       }
     }
 
-    // HAUPTFUNKTION FÜR KI-ANALYSE
     async function analyzeReport() {
-      // FEST HINTERLEGTER KEY: Trage hier deinen Key in die Anführungszeichen ein!
-      const apiKey = "AQ.Ab8RN6Io4_8MHWcsZk848mMVZ9G3MkDbTHngKzsfWBRsSDrEqg";
-
       if (!selectedFile) {
         alert("Bitte wähle zuerst eine PDF-Datei aus.");
-        return;
-      }
-
-      if (apiKey === "DEIN_GEMINI_API_KEY_HIER_EINFÜGEN" || !apiKey) {
-        alert("Bitte trage zuerst deinen echten Google Gemini API-Key in den Code ein!");
         return;
       }
 
@@ -193,53 +183,28 @@
         const arrayBuffer = await selectedFile.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let pdfText = '';
-        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+        
+        for (let i = 1; i <= Math.min(pdf.numPages, 15); i++) {
           const page = await pdf.getPage(i);
           const text = await page.getTextContent();
           pdfText += text.items.map(item => item.str).join(' ') + '\n';
         }
 
-        const promptText = `Du bist ein hochspezialisierter Business-Analyst. Analysiere den folgenden Berichtstext und erstelle eine strukturierte Zusammenfassung auf Deutsch als REINES JSON-Objekt.
-Gib KEINEN Fliesstext, KEINE Einleitung und KEINE Markdown-Codeblöcke (\`\`\`json) zurück!
-
-Verwende exakt folgendes JSON-Schema:
-{
-  "meta": "BERICHTSART | VERTRAULICH",
-  "title": "Haupttitel des Berichts",
-  "subtitle": "Untertitel oder ausgewählte Berichtsgruppe",
-  "highlight": "Der wichtigste Kernsatz in 1-2 prägnanten Sätzen für das Highlight-Feld",
-  "summary": "Ausführliche Executive Summary in 3-4 zusammenhängenden Sätzen.",
-  "kpis": [
-    { "label": "Name der Kennzahl", "value": "Wert (z.B. 3,96)", "subtext": "Zusatzinfo/Trend", "color": "green" },
-    { "label": "Name 2", "value": "Wert 2", "subtext": "Zusatz 2", "color": "green" },
-    { "label": "Name 3", "value": "Wert 3", "subtext": "Zusatz 3", "color": "darkgreen" },
-    { "label": "Name 4", "value": "Wert 4", "subtext": "Zusatz 4", "color": "green" },
-    { "label": "Name 5", "value": "Wert 5", "subtext": "Zusatz 5", "color": "orange" }
-  ],
-  "findings": ["Erkenntnis 1", "Erkenntnis 2", "Erkenntnis 3"],
-  "trends": ["Trend/Entwicklung 1", "Trend/Entwicklung 2"]
-}
-
-Hier ist der Berichtstext:
-${pdfText.slice(0, 12000)}`;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }]
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error.message || "API-Fehler");
+        if (!pdfText.trim()) {
+          throw new Error("Aus der PDF konnte kein Text gelesen werden. Handelt es sich um ein gescanntes Bild?");
         }
 
-        let rawContent = data.candidates[0].content.parts[0].text;
-        rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        const result = JSON.parse(rawContent);
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: pdfText.slice(0, 15000) })
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
         renderOnepager(result);
 
