@@ -14,9 +14,9 @@
     <p class="text-slate-600 text-sm mb-6">Lade einen Bericht (PDF) hoch, um eine automatische KI-Zusammenfassung zu erstellen.</p>
 
     <div id="dropZone" 
-         dragover="handleDragOver(event)" 
-         dragleave="handleDragLeave(event)" 
-         drop="handleDrop(event)"
+         ondragover="handleDragOver(event)" 
+         ondragleave="handleDragLeave(event)" 
+         ondrop="handleDrop(event)"
          onclick="document.getElementById('fileInput').click()"
          class="border-2 border-dashed border-slate-300 rounded-lg p-10 cursor-pointer hover:bg-slate-50 transition duration-150">
       
@@ -115,7 +115,7 @@
       }
     }
 
-   // VERBESSERTE BASE64-KONVERTIERUNG
+    // Robuste Base64-Konvertierung ohne Pattern-Fehler
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -123,9 +123,9 @@
         reader.onload = () => {
           const bytes = new Uint8Array(reader.result);
           let binary = '';
-          const len = bytes.byteLength;
-          for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
+          const chunk = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunk) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
           }
           resolve(window.btoa(binary));
         };
