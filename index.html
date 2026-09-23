@@ -1,143 +1,88 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PULSE | Berichtszusammenfassungen</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE | Berichtszusammenfassung</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              DEFAULT: '#2e7d32',
-              light: '#81c784',
-              soft: '#e8f5e9',
-              dark: '#1b5e20',
-              accent: '#fbc02d'
-            }
-          }
-        }
-      }
-    }
-  </script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
 
-  <div class="max-w-6xl mx-auto px-4 py-6">
+  <!-- UPLOAD VIEW -->
+  <div id="uploadView" class="max-w-xl mx-auto mt-20 p-8 bg-white rounded-xl shadow-md border border-slate-200 text-center">
+    <h1 class="text-2xl font-bold text-slate-900 mb-2">PULSE25 Berichts-Analyse</h1>
+    <p class="text-slate-600 text-sm mb-6">Lade einen Bericht (PDF) hoch, um eine automatische KI-Zusammenfassung zu erstellen.</p>
 
-    <!-- UPLOAD-FORMULAR -->
-    <main id="uploadView" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 md:p-12 space-y-8">
-      <header class="border-b-2 border-brand pb-4 flex justify-between items-center">
-        <div>
-          <p class="text-xs uppercase tracking-wider font-semibold text-slate-500">Werkzeug für Berichtszusammenfassungen |</p>
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900">PULSE</h1>
-        </div>
-        <span class="bg-brand text-white font-bold text-xs uppercase px-4 py-2 rounded">Onepager</span>
-      </header>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        <div class="space-y-6 border-l-4 border-brand pl-6">
-          <h2 class="text-4xl font-extrabold text-slate-900 leading-tight">
-            Bericht in Sekunden zum Onepager
-          </h2>
-          <p class="text-slate-600 text-base leading-relaxed">
-            Laden Sie einen Bericht als PDF-Datei hoch. Die Anwendung analysiert das Dokument automatisch mit KI, zieht die wichtigsten Aussagen heraus und gestaltet daraus eine kompakte Seite im PULSE-Design.
-          </p>
-        </div>
-
-        <div class="space-y-4">
-          <!-- DROP ZONE -->
-          <div id="dropZone" 
-               onclick="document.getElementById('fileInput').click()" 
-               ondragover="handleDragOver(event)" 
-               ondragleave="handleDragLeave(event)" 
-               ondrop="handleDrop(event)"
-               class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer flex flex-col items-center justify-center min-h-[200px]">
-            <svg class="w-10 h-10 text-brand mb-2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-            <p id="fileNameDisplay" class="font-bold text-slate-800 pointer-events-none">PDF-Datei hierher ziehen oder klicken</p>
-            <p class="text-slate-400 text-xs mt-1 pointer-events-none">PDF-Dokumente bis 15 MB</p>
-            <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileSelect(event)">
-          </div>
-
-          <button id="startBtn" onclick="analyzeReport()" class="w-full bg-brand hover:bg-brand-dark text-white font-bold py-3.5 rounded-lg shadow transition">
-            Bericht analysieren
-          </button>
-        </div>
-      </div>
-    </main>
-
-    <!-- LOADING STATE -->
-    <div id="loadingView" class="hidden bg-white rounded-xl border border-slate-200 p-12 text-center space-y-4 my-8 shadow-sm">
-      <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-brand border-t-transparent"></div>
-      <h3 class="text-xl font-bold text-slate-800">Google Gemini KI analysiert den Bericht...</h3>
-      <p class="text-sm text-slate-500">Kernaussagen und Kennzahlen werden extrahiert.</p>
+    <div id="dropZone" 
+         onfragover="handleDragOver(event)" 
+         ondragleave="handleDragLeave(event)" 
+         ondrop="handleDrop(event)"
+         onclick="document.getElementById('fileInput').click()"
+         class="border-2 border-dashed border-slate-300 rounded-lg p-10 cursor-pointer hover:bg-slate-50 transition duration-150">
+      
+      <svg class="mx-auto h-12 w-12 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+      </svg>
+      <p id="fileNameDisplay" class="text-slate-600 font-medium text-sm">PDF-Datei hierher ziehen oder klicken</p>
+      <input type="file" id="fileInput" accept="application/pdf" class="hidden" onchange="handleFileSelect(event)">
     </div>
 
-    <!-- ONEPAGER ERGEBNIS -->
-    <div id="onepagerView" class="hidden space-y-4">
-      <div class="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm print:hidden">
-        <button onclick="resetApp()" class="text-xs font-bold text-slate-500 hover:text-slate-800">← Neuer Bericht</button>
-        <button onclick="window.print()" class="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded hover:bg-slate-800">Als PDF drucken / speichern</button>
+    <button onclick="analyzeReport()" class="mt-6 w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+      Bericht jetzt analysieren
+    </button>
+  </div>
+
+  <!-- LOADING VIEW -->
+  <div id="loadingView" class="hidden max-w-xl mx-auto mt-20 p-8 bg-white rounded-xl shadow-md text-center">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-700 mx-auto mb-4"></div>
+    <h2 class="text-lg font-semibold text-slate-800">Google Gemini KI analysiert den Bericht...</h2>
+    <p class="text-slate-500 text-sm mt-1">Kernaussagen und Kennzahlen werden extrahiert.</p>
+  </div>
+
+  <!-- ONEPAGER VIEW -->
+  <div id="onepagerView" class="hidden max-w-4xl mx-auto my-10 p-8 bg-white rounded-xl shadow-lg border border-slate-200">
+    <div class="flex justify-between items-start border-b pb-4 mb-6">
+      <div>
+        <p id="opMeta" class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1"></p>
+        <h1 id="opTitle" class="text-2xl font-extrabold text-slate-900"></h1>
+        <p id="opSubtitle" class="text-sm text-slate-500 mt-1"></p>
       </div>
-
-      <div id="printArea" class="bg-white border border-slate-200 p-8 md:p-12 rounded-xl shadow-lg space-y-8 text-slate-800">
-        <div class="border-b-2 border-brand pb-3 flex justify-between items-end">
-          <div>
-            <p id="opMeta" class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">BERICHT | VERTRAULICH</p>
-            <p id="opSubMeta" class="text-[10px] uppercase font-semibold text-slate-400">ERGEBNISSE DER AUSGEWÄHLTEN BERICHTSGRUPPE</p>
-          </div>
-          <span class="bg-brand text-white font-bold text-[10px] px-3 py-1 rounded tracking-widest uppercase">PULSE</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-          <div class="md:col-span-2 space-y-2">
-            <h1 id="opTitle" class="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">Berichtstitel</h1>
-            <p id="opSubtitle" class="text-sm text-slate-500">Untertitel</p>
-          </div>
-          <div class="border-l-4 border-brand pl-4 py-1 bg-slate-50 rounded-r">
-            <p id="opHighlight" class="text-xs font-bold text-slate-800 leading-snug">Highlight-Satz</p>
-          </div>
-        </div>
-
-        <hr class="border-slate-200">
-
-        <div class="space-y-2">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Executive Summary</h2>
-          <p id="opSummary" class="text-xs leading-relaxed text-slate-700"></p>
-        </div>
-
-        <hr class="border-slate-200">
-
-        <div class="space-y-3">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Wichtigste Kennzahlen</h2>
-          <div id="opKPIs" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
-        </div>
-
-        <hr class="border-slate-200">
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-          <div class="space-y-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Zentrale Erkenntnisse</h2>
-            <ul id="opFindings" class="text-xs space-y-2 text-slate-700 list-disc pl-4"></ul>
-          </div>
-          <div class="space-y-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900">Entwicklungen und Trends</h2>
-            <ul id="opTrends" class="text-xs space-y-2 text-slate-700 list-disc pl-4"></ul>
-          </div>
-        </div>
-      </div>
+      <button onclick="resetApp()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 py-1.5 px-3 rounded font-medium">
+        Neues PDF hochladen
+      </button>
     </div>
 
+    <!-- Highlight Box -->
+    <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded mb-6">
+      <p id="opHighlight" class="text-emerald-900 font-medium text-sm leading-relaxed"></p>
+    </div>
+
+    <!-- Zusammenfassung -->
+    <div class="mb-6">
+      <h3 class="text-sm font-bold uppercase text-slate-500 tracking-wider mb-2">Zusammenfassung</h3>
+      <p id="opSummary" class="text-slate-700 text-sm leading-relaxed"></p>
+    </div>
+
+    <!-- KPIs -->
+    <div class="mb-6">
+      <h3 class="text-sm font-bold uppercase text-slate-500 tracking-wider mb-3">Wichtigste Kennzahlen</h3>
+      <div id="opKPIs" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
+    </div>
+
+    <!-- Findings & Trends -->
+    <div class="grid md:grid-cols-2 gap-6 border-t pt-6">
+      <div>
+        <h3 class="text-sm font-bold uppercase text-slate-500 tracking-wider mb-3">Zentrale Erkenntnisse</h3>
+        <ul id="opFindings" class="list-disc list-inside text-xs text-slate-700 space-y-2 leading-relaxed"></ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold uppercase text-slate-500 tracking-wider mb-3">Entwicklungen & Trends</h3>
+        <ul id="opTrends" class="list-disc list-inside text-xs text-slate-700 space-y-2 leading-relaxed"></ul>
+      </div>
+    </div>
   </div>
 
   <script>
-    if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-    }
-    
     let selectedFile = null;
 
     function handleFileSelect(e) {
@@ -150,24 +95,39 @@
     function handleDragOver(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.getElementById('dropZone').classList.add('bg-slate-200');
+      document.getElementById('dropZone').classList.add('bg-slate-100');
     }
 
     function handleDragLeave(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.getElementById('dropZone').classList.remove('bg-slate-200');
+      document.getElementById('dropZone').classList.remove('bg-slate-100');
     }
 
     function handleDrop(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.getElementById('dropZone').classList.remove('bg-slate-200');
+      document.getElementById('dropZone').classList.remove('bg-slate-100');
       
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         selectedFile = e.dataTransfer.files[0];
         document.getElementById('fileNameDisplay').innerText = "Ausgewählt: " + selectedFile.name;
       }
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+          if ((encoded.length % 4) !== 0) {
+            encoded += '='.repeat(4 - (encoded.length % 4));
+          }
+          resolve(encoded);
+        };
+        reader.onerror = error => reject(error);
+      });
     }
 
     async function analyzeReport() {
@@ -180,24 +140,15 @@
       document.getElementById('loadingView').classList.remove('hidden');
 
       try {
-        const arrayBuffer = await selectedFile.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let pdfText = '';
-        
-        for (let i = 1; i <= Math.min(pdf.numPages, 15); i++) {
-          const page = await pdf.getPage(i);
-          const text = await page.getTextContent();
-          pdfText += text.items.map(item => item.str).join(' ') + '\n';
-        }
-
-        if (!pdfText.trim()) {
-          throw new Error("Aus der PDF konnte kein Text gelesen werden. Handelt es sich um ein gescanntes Bild?");
-        }
+        const base64Data = await fileToBase64(selectedFile);
 
         const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: pdfText.slice(0, 15000) })
+          body: JSON.stringify({
+            pdfBase64: base64Data,
+            mimeType: selectedFile.type || 'application/pdf'
+          })
         });
 
         const result = await response.json();
@@ -236,7 +187,6 @@
             <p class="text-[10px] text-slate-500 font-medium h-6 leading-tight">${kpi.label}</p>
             <div class="${bgClass} p-2.5 rounded font-bold text-lg flex items-center justify-between shadow-sm">
               <span>${kpi.value}</span>
-              <span class="text-xs">↑</span>
             </div>
             <p class="text-[9px] text-slate-400 leading-tight">${kpi.subtext || ''}</p>
           </div>
